@@ -1,0 +1,7 @@
+#!/bin/bash
+projPath=$(dirname $0 | xargs realpath | xargs dirname)
+cd "$projPath"
+for app in $(ls $projPath); do
+  [[ $app != "utils" ]] && [[ -d "${projPath}/${app}/.git" ]] && cd "$projPath/$app" && npm install ../utils && cd $projPath
+done
+$projPath/scripts/restart

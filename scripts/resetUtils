@@ -1,0 +1,7 @@
+#!/bin/bash
+projPath=$(dirname $0 | xargs realpath | xargs dirname)
+cd "$projPath"
+
+for d in $(ls $projPath); do
+  [[ $d != "utils" ]] && [[ -f "$projPath/$d/package.json" ]] && echo "Resetting ${d}" && cd $projPath/$d && git checkout package*.json && cd $projPath
+done
