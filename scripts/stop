@@ -1,0 +1,12 @@
+#!/bin/bash
+projPath=$(dirname $0 | xargs realpath | xargs dirname)
+stopService() {
+  [[ ! -d "$projPath/$1" ]] && echo -e "Service path $1 not found" && exit 1
+  config="${projPath}/$1/configs.json"
+  port=$(cat $config | jq '.app.port')
+  _pid=$(lsof -i ":${port}" | grep -v "PID" | awk '{print $2}' | tr '\n' ' ' | sed 's/ $//g')
+  [[ -z $_pid ]] && echo -e "$1 is not running" && return 0
+  kill -9 $_pid
+}
+
+[[ -z $1 ]] && echo -e "No service name provided" && exit 1 || stopService "$1"

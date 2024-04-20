@@ -1,0 +1,16 @@
+#!/bin/bash
+projPath=$(dirname $0 | xargs realpath | xargs dirname | xargs dirname)
+checkStatus() {
+  cd "${projPath}/$1"
+  res=$(git status)
+  [[ $res == *"working tree clean"* ]] && echo -e "Checking git status for app ${app} - \xE2\x9C\x94" || echo -e "Checking git status for app ${app} - $(git status --porcelain)"
+  
+}
+syncToRemote() {
+  cd "${projPath}/$1"
+  res=$(git --no-pager log origin/main..HEAD)
+  [[ -z $res ]] && echo "✅" && return 0 || echo -e "$res"
+}
+for app in $(ls $projPath); do
+  [[ -d "${projPath}/${app}/.git" ]] && checkStatus $app
+done
