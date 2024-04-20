@@ -1,0 +1,14 @@
+#!/bin/bash
+projPath=$(dirname $0 | xargs realpath | xargs dirname)
+checkStatus() {
+  cd "$1/$2"
+  res=$(git status)
+  [[ $res == *"working tree clean"* ]] && echo -e "$2 is clean" && return 0
+  git status --porcelain
+}
+cd "$projPath/utils"
+message="Upgrades novostack-utils - $(git --no-pager log -1 --pretty='%s [%h]')"
+cd "$projPath"
+for app in $(ls $projPath); do
+  [[ $app != "utils" ]] && [[ -d "${projPath}/${app}/.git" ]] && cd "$projPath/$app" && npm update && git add package*json && git commit -m "$message" && git push origin main && echo -e "Checking git status for app ${app} - $(checkStatus $projPath $app)" && cd $projPath
+done

@@ -1,0 +1,15 @@
+#!/bin/bash
+projPath=$(dirname $0 | xargs realpath | xargs dirname)
+updateService() {
+  [[ ! -d "$projPath/$1" ]] && echo -e "Service path $1 not found" && exit 1
+  config="${projPath}/$1/configs.json"
+  pkgJSON="${projPath}/$1/pacakge.json"
+  port=$(cat $config | jq '.app.port')
+  [[ -z $port ]] && echo -e "Skipping $1" && return 0
+  echo "Updating $1" && npm i && "$projPath/scripts/restart" $1
+}
+
+[[ ! -z $1 ]] && restartService $1 ||
+for app in $(ls $projPath); do
+  [[ -f "${projPath}/${app}/configs.json" ]] && updateService $app
+done
