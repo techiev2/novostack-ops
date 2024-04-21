@@ -1,0 +1,3 @@
+#!/bin/bash
+[[ -z $1 ]] && echo -e "No command provided to watch" && exit 1
+watch -n1 -d "$1"
