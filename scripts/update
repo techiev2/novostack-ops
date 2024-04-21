@@ -1,5 +1,5 @@
 #!/bin/bash
-projPath=$(dirname $0 | xargs realpath | xargs dirname)
+projPath=$(dirname $0 | xargs realpath | xargs dirname | xargs dirname)
 updateService() {
   [[ ! -d "$projPath/$1" ]] && echo -e "Service path $1 not found" && exit 1
   config="${projPath}/$1/configs.json"

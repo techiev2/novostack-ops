@@ -1,5 +1,5 @@
 #!/bin/bash
-projPath=$(dirname $0 | xargs realpath | xargs dirname)
+projPath=$(dirname $0 | xargs realpath | xargs dirname | xargs dirname)
 checkStatus() {
   cd "$1/$2"
   res=$(git status)
