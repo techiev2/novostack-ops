@@ -5,10 +5,10 @@ serviceStatus() {
   config="${projPath}/$1/configs.json"
   port=$(cat $config | jq '.app.port')
   _pid=$(lsof -i ":${port}" | grep -v "PID" | awk '{print $2}' | uniq | tr '\n' ' ' | sed 's/ $//g')
-  [[ -z $_pid ]] && echo -e "$1 is not running" && return 0 || echo -e "$1 is listening on port $port [PID: $_pid]"
+  [[ -z $_pid ]] && echo -e "$1 [✗ | Port: $port]" && return 0 || echo -e "$1 [\xE2\x9C\x94 | Port: $port | PID: $_pid]"
 }
 
-[[ ! -z $1 ]] && serviceStatus $1 ||
+[[ ! -z $1 ]] && serviceStatus $1 || echo -e "Service [Status | Port | PID]" &&
 for app in $(ls $projPath); do
   [[ -f "${projPath}/${app}/configs.json" ]] && serviceStatus $app
 done
