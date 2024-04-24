@@ -10,6 +10,7 @@ syncToRemote() {
   echo -e "$1 - ${count} unpushed commit${suffix}\n. Pushing them to remote"
   git push origin main
 }
+echo -e "[$(date '+%Y-%m-%dT%T')]\nChecking for unpushed changes"
 for app in $(ls $projPath); do
   [[ -d "${projPath}/${app}/.git" ]] && syncToRemote $app
 done
