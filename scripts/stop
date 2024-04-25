@@ -9,4 +9,7 @@ stopService() {
   kill -9 $_pid
 }
 
-[[ -z $1 ]] && echo -e "No service name provided" && exit 1 || stopService "$1"
+[[ ! -z $1 ]] && stopService $1 ||
+for app in $(ls $projPath); do
+  [[ -f "${projPath}/${app}/configs.json" ]] && stopService $app
+done
