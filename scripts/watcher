@@ -1,4 +1,4 @@
 #!/bin/bash
 [[ -z $1 ]] && echo -e "No command provided to watch" && exit 1
 [[ -z $2 ]] && timing=1 || timing="$2"
-watch "-n$timing" -d "$1"
+watch "-n$timing" -d "$1 | column -t -s' '"
