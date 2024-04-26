@@ -6,11 +6,11 @@ syncToRemote() {
   count=$(git --no-pager log origin/main..HEAD --pretty='%s [%h]' | awk '{$1=$1};1' | wc -l)
   count=$(echo $count | awk '{$1=$1};1')
   [[ $count -eq 1 ]] && suffix='' || suffix='s'
-  [[ -z $res ]] && echo -e "$1 - \xE2\x9C\x94" && return 0
+  [[ -z $res ]] && echo -e "$1 \xE2\x9C\x94" && return 0
   echo -e "$1 - ${count} unpushed commit${suffix}\n. Pushing them to remote"
   git push origin main
 }
-echo -e "[$(date '+%Y-%m-%dT%T')]\nChecking for unpushed changes"
+echo -e "[$(date '+%Y-%m-%dT%T')]\n"
 for app in $(ls $projPath); do
   [[ -d "${projPath}/${app}/.git" ]] && syncToRemote $app
 done
