@@ -3,8 +3,7 @@ projPath=$(dirname $0 | xargs realpath | xargs dirname | xargs dirname)
 checkStatus() {
   cd "${projPath}/$1"
   res=$(git status)
-  [[ $res == *"working tree clean"* ]] && echo -e "Checking git status for app ${app} - \xE2\x9C\x94" || echo -e "Checking git status for app ${app} - $(git status --porcelain)"
-  
+  [[ $res == *"working tree clean"* ]] && echo -e "${app} \xE2\x9C\x94\n-----\n" || echo -e "${app} $(git status --porcelain)\n-----\n"
 }
 syncToRemote() {
   cd "${projPath}/$1"
