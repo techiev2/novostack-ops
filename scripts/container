@@ -5,12 +5,8 @@ startService() {
   cd "$projPath/$1"
   session="service-$1"
   [[ -z $(tmux ls | grep "$session") ]] && tmux new-session -d -s "$session" "npm run service:watch" && return 0
-  [[ -z $($projPath/ops/scripts/status "$1" | grep "PID:") ]] && tmux send-keys -t "$session.1" "npm run service:watch" C-ENTER || $projPath/ops/scripts/restart $1
+  [[ -z $($projPath/ops/scripts/status "$1" | grep "PID:") ]] && tmux kill-session -t "$session" && tmux new-session -d -s "$session" "npm run service:watch" && return 0 || $projPath/ops/scripts/restart $1
   return 0
-  # $projPath/ops/scripts/status "$1" | grep "PID"
-  # [[ $? -eq 0 ]] && tmux send-keys -t "$session.1" "npm run service:watch" ENTER || $projPath/ops/scripts/restart $1
-  # tmux send-keys -t "$session.1" "npm run service:watch"
-  # [[ $? != 0 ]] && tmux new-session -d -s "$session"  "npm run service:watch" || tmux send-keys -t "$session.1" "npm run service:watch" ENTER
 }
 [[ ! -z $1 ]] && startService $1 && exit 0 || for app in $(ls $projPath); do
   [[ -f "${projPath}/${app}/configs.json" ]] && startService $app
