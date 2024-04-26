@@ -8,7 +8,7 @@ serviceStatus() {
   [[ -z $_pid ]] && echo -e "$1 [✗ | Port: $port]" && return 0 || echo -e "$1 [\xE2\x9C\x94 | Port: $port | PID: $_pid]"
 }
 
-[[ ! -z $1 ]] && serviceStatus $1 || echo -e "[$(date '+%Y-%m-%dT%T')] Service [Status | Port | PID]" &&
+[[ ! -z $1 ]] && serviceStatus $1 && exit 0 || echo -e "[$(date '+%Y-%m-%dT%T')] Service [Status | Port | PID]" &&
 for app in $(ls $projPath); do
   [[ -f "${projPath}/${app}/configs.json" ]] && serviceStatus $app
 done
