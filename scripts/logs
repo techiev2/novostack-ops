@@ -1,0 +1,19 @@
+#!/bin/bash
+fifo_file=$(mktemp -u)
+echo "" > $fifo_file
+projPath=$(dirname $0 | xargs realpath | xargs dirname | xargs dirname)
+captureLogs() {
+  session="service-$1"
+  [[ -z $(tmux ls | grep "$session") ]] && echo -e "Service $1 is not running as a container. Cannot fetch logs." && exit 1
+  watch -n1 tmux capture-pane -pt $session
+}
+captureAllLogs() {
+  tail -f "$fifo_file" &
+  services=""
+  for app in $(ls $projPath); do
+    if [[ -f "${projPath}/${app}/configs.json" ]]; then
+      [[ -z $(tmux ls | grep "service-$app") ]] && echo -e "Service $app is not running as a container. Cannot fetch logs." || watch -n1 tmux capture-pane -pt "service-$app" | tee -a $fifo_file &
+    fi
+  done
+}
+[[ ! -z $1 ]] && captureLogs $1 || captureAllLogs
