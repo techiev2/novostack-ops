@@ -1,0 +1,15 @@
+#!/bin/bash
+projPath=$(dirname $0 | xargs realpath | xargs dirname | xargs dirname)
+auditService() {
+  [[ ! -d "$projPath/$1" ]] && echo -e "Service path $1 not found" && exit 1
+  cd "$projPath/$1"
+  res=$(npm audit 2>&1)
+  [[ $res = *"found 0 vulnerabilities"* ]] && echo -e "$1 \xE2\x9C\x94\n-----\n" && return 0
+  echo -e "$1 ✗\n\t$res\n-----\n"
+}
+
+[[ ! -z $1 ]] && auditService $1 ||
+for app in $(ls $projPath); do
+  [[ -f "${projPath}/${app}/configs.json" ]] && auditService $app &
+done
+wait
