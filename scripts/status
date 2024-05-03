@@ -1,14 +1,25 @@
 #!/bin/bash
 projPath=$(dirname $0 | xargs realpath | xargs dirname | xargs dirname)
+serviceCount=0
+aliveCount=0
 serviceStatus() {
   [[ ! -d "$projPath/$1" ]] && echo -e "Service path $1 not found" && exit 1
   config="${projPath}/$1/configs.json"
   port=$(cat $config | jq '.app.port')
   _pid=$(lsof -i ":${port}" | grep -v "PID" | awk '{print $2}' | uniq | tr '\n' ' ' | sed 's/ $//g')
-  [[ -z $_pid ]] && echo -e "$1 [✗ | Port: $port]" && return 0 || echo -e "$1 [\xE2\x9C\x94 | Port: $port | PID: $_pid]"
+  [[ -z $_pid ]] && echo -e "$1 [✗ | Port: $port]" && return 0 || echo -e "$1 [\xE2\x9C\x94 | Port: $port | PID: $_pid]" && aliveCount=$(($aliveCount+1))
 }
 
-[[ ! -z $1 ]] && serviceStatus $1 && exit 0 || echo -e "[$(date '+%Y-%m-%dT%T')] Service [Status | Port | PID]" &&
-for app in $(ls $projPath); do
-  [[ -f "${projPath}/${app}/configs.json" ]] && serviceStatus $app
-done
+checkAllServices() {
+  for app in $(ls $projPath); do
+    [[ -f "${projPath}/${app}/configs.json" ]] && serviceCount=$(($serviceCount+1))
+  done
+  echo -e "[$(date '+%Y-%m-%dT%T')] Service [Status | Port | PID]" &&
+  for app in $(ls $projPath); do
+    [[ -f "${projPath}/${app}/configs.json" ]] && serviceStatus $app
+  done
+  echo -e "\n\n"
+  [[ $serviceCount -gt $aliveCount ]] && echo -e "✗ Partially degraded" && exit 1 || [[ $aliveCount -eq 0 ]] && echo -e "✗ All failed." && exit 1 || echo -e "\xE2\x9C\x94 All services up." && exit 0
+}
+
+[[ ! -z $1 ]] && serviceStatus $1 && exit 0 || checkAllServices
