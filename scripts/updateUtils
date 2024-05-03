@@ -10,6 +10,5 @@ cd "$projPath/utils"
 message="Upgrades novostack-utils - $(git --no-pager log -1 --pretty='%s [%h]')"
 cd "$projPath"
 for app in $(ls $projPath); do
-  # TODO: Fix this by using a jq query to check for novostack-utils package in dependencies.
-  [[ $app != "utils" ]] && [[ $app !== "admin" ]] && [[ -d "${projPath}/${app}/.git" ]] && cd "$projPath/$app" && npm update && git add package*json && git commit -m "$message" && git push origin main && echo -e "Checking git status for app ${app} - $(checkStatus $projPath $app)" && cd $projPath
+  [[ -d $projPath/$app ]] && [[ -f $projPath/$app/package.json ]] && [[ $(cat $projPath/$app/package.json | jq '.dependencies | ."novostack-utils"') != "null" ]] && echo -e "Updating $app" && cd "$projPath/$app" && npm update && git add package*json && git commit -m "$message" && git push origin main && echo -e "Checking git status for app ${app} - $(checkStatus $projPath $app)" && cd $projPath
 done
