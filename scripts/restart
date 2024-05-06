@@ -2,8 +2,7 @@
 projPath=$(dirname $0 | xargs realpath | xargs dirname | xargs dirname)
 restartService() {
   [[ ! -d "$projPath/$1" ]] && echo -e "Service path $1 not found" && exit 1
-  config="${projPath}/$1/configs.json"
-  port=$(cat $config | jq '.app.port')
+  [[ $1 == "admin" ]] && port=5173 || port=$(cat "${projPath}/$1/configs.json" | jq '.app.port')
   _pid=$(lsof -i ":${port}" | grep -v "PID" | awk '{print $2}' | tr '\n' ' ' | sed 's/ $//g')
   [[ -z $_pid ]] && echo -e "$1 is not running" && return 0
   echo "Restarting $1 listening on port ${port} [PID: ${_pid}]"
