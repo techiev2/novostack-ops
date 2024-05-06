@@ -2,8 +2,8 @@
 projPath=$(dirname $0 | xargs realpath | xargs dirname | xargs dirname)
 stopService() {
   [[ ! -d "$projPath/$1" ]] && echo -e "Service path $1 not found" && exit 1
-  config="${projPath}/$1/configs.json"
-  [[ $1 == "admin" ]] && port=5173 || port=$(cat $config | jq '.app.port')
+  [[ $1 != "admin" ]] && [[ ! -f "${projPath}/$1/configs.json" ]] && echo -e "No configs found for $1" && return 1
+  [[ $1 == "admin" ]] && port=5173 || port=$(cat "${projPath}/$1/configs.json" | jq '.app.port')
   _pid=$(lsof -i ":${port}" | grep -v "PID" | awk '{print $2}' | tr '\n' ' ' | sed 's/ $//g')
   [[ -z $_pid ]] && echo -e "$1 is not running" && return 0
   kill -9 $_pid
@@ -11,5 +11,5 @@ stopService() {
 
 [[ ! -z $1 ]] && stopService $1 ||
 for app in $(ls $projPath); do
-  [[ -f "${projPath}/${app}/package.json" ]] && stopService $app
+  [[ -f "${projPath}/${app}/package.json" ]] && [[ $app != "utils" ]] && stopService $app
 done
