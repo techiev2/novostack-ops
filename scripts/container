@@ -10,5 +10,5 @@ startService() {
   return 0
 }
 [[ ! -z $1 ]] && startService $1 && exit 0 || for app in $(ls $projPath); do
-  [[ -f "${projPath}/${app}/configs.json" ]] && startService $app
+  [[ -f "${projPath}/${app}/package.json" ]] && [[ $app != "utils" ]] && startService $app
 done
