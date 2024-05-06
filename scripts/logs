@@ -11,7 +11,7 @@ captureAllLogs() {
   tail -f "$fifo_file" &
   services=""
   for app in $(ls $projPath); do
-    if [[ -f "${projPath}/${app}/configs.json" ]]; then
+    if [[ -f "${projPath}/${app}/package.json" ]] && [[ $app !== "utils" ]]; then
       [[ -z $(tmux ls | grep "service-$app") ]] && echo -e "Service $app is not running as a container. Cannot fetch logs." || watch -n1 tmux capture-pane -pt "service-$app" | tee -a $fifo_file &
     fi
   done
