@@ -1,12 +1,13 @@
 #!/bin/bash
 projPath=$(dirname $0 | xargs realpath | xargs dirname | xargs dirname)
+scriptsRoot=$(dirname $0 | xargs realpath)
 restartService() {
   [[ ! -d "$projPath/$1" ]] && echo -e "Service path $1 not found" && exit 1
   [[ $1 == "admin" ]] && port=5173 || port=$(cat "${projPath}/$1/configs.json" | jq '.app.port')
   _pid=$(lsof -i ":${port}" | grep -v "PID" | awk '{print $2}' | tr '\n' ' ' | sed 's/ $//g')
   [[ -z $_pid ]] && echo -e "$1 is not running" && return 0
   echo "Restarting $1 listening on port ${port} [PID: ${_pid}]"
-  kill -USR2 $_pid
+  [[ $1 == "admin" ]] && "$scriptsRoot/stop" admin && "$scriptsRoot/container" admin || kill -USR2 $_pid
 }
 
 [[ ! -z $1 ]] && restartService $1 ||
