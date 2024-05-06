@@ -10,6 +10,6 @@ auditService() {
 
 [[ ! -z $1 ]] && auditService $1 ||
 for app in $(ls $projPath); do
-  [[ -f "${projPath}/${app}/configs.json" ]] && auditService $app &
+  [[ -f "${projPath}/${app}/package.json" ]] && auditService $app &
 done
 wait
