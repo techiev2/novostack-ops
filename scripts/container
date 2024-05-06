@@ -4,7 +4,8 @@ startService() {
   [[ ! -d "$projPath/$1" ]] && echo -e "Service path $1 not found" && exit 1
   cd "$projPath/$1"
   session="service-$1"
-  [[ -z $(tmux ls | grep "$session") ]] && tmux new-session -d -s "$session" "npm run service:watch" && return 0
+  [[ $1 == "admin" ]] && cmd="npm run dev" || cmd="npm run service:watch"
+  [[ -z $(tmux ls | grep "$session") ]] && tmux new-session -d -s "$session" "$cmd" && return 0
   [[ -z $($projPath/ops/scripts/status "$1" | grep "PID:") ]] && tmux kill-session -t "$session" && tmux new-session -d -s "$session" "npm run service:watch" && return 0 || $projPath/ops/scripts/restart $1
   return 0
 }
