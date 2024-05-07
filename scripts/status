@@ -4,15 +4,15 @@ serviceCount=0
 aliveCount=0
 serviceStatus() {
   [[ ! -d "$projPath/$1" ]] && echo -e "Service path $1 not found" && exit 1
-  config="${projPath}/$1/configs.json"
-  [[ $1 == 'admin' ]] && port=5173 || port=$(cat $config | jq '.app.port')
+  [[ $1 == 'admin' ]] && port=5173 || port=$(cat "${projPath}/$1/configs.json" | jq '.app.port')
+  [[ -z $port ]] && return 1
   _pid=$(lsof -i ":${port}" | grep -v "PID" | awk '{print $2}' | uniq | tr '\n' ' ' | sed 's/ $//g')
   [[ -z $_pid ]] && echo -e "$1 [✗ | Port: $port]" && return 0 || echo -e "$1 [\xE2\x9C\x94 | Port: $port | PID: $_pid]" && aliveCount=$(($aliveCount+1))
 }
 
 checkAllServices() {
   for app in $(ls $projPath); do
-    [[ -f "${projPath}/${app}/configs.json" ]] && serviceCount=$(($serviceCount+1))
+    [[ -s "${projPath}/${app}/configs.json" ]] && serviceCount=$(($serviceCount+1))
   done
   echo -e "[$(date '+%Y-%m-%dT%T')] Service [Status | Port | PID]" &&
   for app in $(ls $projPath); do
