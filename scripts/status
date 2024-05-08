@@ -1,13 +1,19 @@
 #!/bin/bash
 projPath=$(dirname $0 | xargs realpath | xargs dirname | xargs dirname)
+scriptsPath=$(dirname $0 | xargs realpath)
 serviceCount=0
 aliveCount=0
+failures=""
 serviceStatus() {
   [[ ! -d "$projPath/$1" ]] && echo -e "Service path $1 not found" && exit 1
   [[ $1 == 'admin' ]] && port=5173 || port=$(cat "${projPath}/$1/configs.json" | jq '.app.port')
   [[ -z $port ]] && return 1
   _pid=$(lsof -i ":${port}" | grep -v "PID" | awk '{print $2}' | uniq | tr '\n' ' ' | sed 's/ $//g')
-  [[ -z $_pid ]] && echo -e "$1 [✗ | Port: $port]" && return 0 || echo -e "$1 [\xE2\x9C\x94 | Port: $port | PID: $_pid]" && aliveCount=$(($aliveCount+1))
+  [[ -z $_pid ]] && echo -e "$1 [✗ | Port: $port]" && failures="$failures $app " && return 0 || echo -e "$1 [\xE2\x9C\x94 | Port: $port | PID: $_pid]" && aliveCount=$(($aliveCount+1))
+}
+bringServicesUp() {
+  $scriptsPath/container $failures
+  return 0
 }
 
 checkAllServices() {
@@ -19,7 +25,7 @@ checkAllServices() {
     [[ -f "${projPath}/${app}/package.json" ]] && [[ $app != 'utils' ]] && serviceStatus $app
   done
   echo -e "\n\n"
-  [[ $aliveCount -eq 0 ]] && echo -e "✗ All failed." && exit 1 || [[ $serviceCount -gt $aliveCount ]] && echo -e "✗ Partially degraded [$aliveCount/$serviceCount]" && exit 1 || echo -e "\xE2\x9C\x94 All services up." && exit 0
+  [[ $aliveCount -eq 0 ]] && echo -e "✗ All failed." && bringServicesUp && exit 1 || [[ $serviceCount -gt $aliveCount ]] && echo -e "✗ Partially degraded [$aliveCount/$serviceCount]" && bringServicesUp && exit 1 || echo -e "\xE2\x9C\x94 All services up." && exit 0
 }
 
 [[ ! -z $1 ]] && serviceStatus $1 && exit 0 || checkAllServices
