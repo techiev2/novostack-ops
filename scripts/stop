@@ -1,15 +1,17 @@
 #!/bin/bash
 projPath=$(dirname $0 | xargs realpath | xargs dirname | xargs dirname)
 stopService() {
-  [[ ! -d "$projPath/$1" ]] && echo -e "Service path $1 not found" && exit 1
-  [[ $1 != "admin" ]] && [[ ! -f "${projPath}/$1/configs.json" ]] && echo -e "No configs found for $1" && return 1
-  [[ $1 == "admin" ]] && port=5173 || port=$(cat "${projPath}/$1/configs.json" | jq '.app.port')
-  _pid=$(lsof -i ":${port}" | grep -v "PID" | awk '{print $2}' | tr '\n' ' ' | sed 's/ $//g')
-  [[ -z $_pid ]] && echo -e "$1 is not running" && return 0
-  kill -9 $_pid
+  for svc in $@; do
+    [[ ! -d "$projPath/$svc" ]] && echo -e "Service path $svc not found" && return 1
+    [[ $svc != "admin" ]] && [[ ! -f "${projPath}/$svc/configs.json" ]] && echo -e "No configs found for $svc" && return 1
+    [[ $svc == "admin" ]] && port=5173 || port=$(cat "${projPath}/$svc/configs.json" | jq '.app.port')
+    _pid=$(lsof -i ":${port}" | grep -v "PID" | awk '{print $2}' | tr '\n' ' ' | sed 's/ $//g')
+    [[ -z $_pid ]] && echo -e "$svc is not running" && return 0
+    kill -9 $_pid
+  done
 }
 
-[[ ! -z $1 ]] && stopService $1 ||
+[[ ! -z $1 ]] && stopService "$@" ||
 for app in $(ls $projPath); do
   [[ -f "${projPath}/${app}/package.json" ]] && [[ $app != "utils" ]] && stopService $app
 done
