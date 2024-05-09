@@ -8,14 +8,16 @@ message="Upgrades novostack-utils - $hash"
 unstashIfNeeded() {
   app=$1
   stashed=$2
-  [[ $stashed == 1 ]] && cd $projPath/$app && git stash pop && cd $projPath && return 0 || echo -e "No changes stashed on $app." && return 0
+  [[ $stashed == 1 ]] && cd $projPath/$app && git stash pop && cd $projPath && return 0 || echo -e "[$app] No changes stashed." && return 0
 }
 
 checkStatus() {
   app=$1
   cd $projPath/$app
+  # Check if the installed utils package is local. If so, switch to git version.
+  [[ ! -z $(cat package.json | jq '.dependencies."novostack-utils"' | grep "file:") ]] && echo "[$app] Resetting utils to published version." && npm install git+https://github.com:techiev2/novostack-utils.git && git add package*json && git commit -m "Replaces locally installed utils package." && git push origin main
   [[ $(git stash) == *"No local changes"* ]] && stashed=0 || stashed=1
-  [[ $(git --no-pager log --pretty='%s [%h]') == *"$hash"* ]] && echo "$app is updated" && unstashIfNeeded $app $stashed && return 0 || echo -e "Updating $app" && npm update && git add package*json && git commit -m "$message" && git push origin main && unstashIfNeeded $app $stashed && return 0
+  [[ $(git --no-pager log --pretty='%s [%h]') == *"$hash"* ]] && echo "[$app] Service is upto date." && unstashIfNeeded $app $stashed && return 0 || echo -e "[$app] Updating service" && npm update && git add package*json && git commit -m "$message" && git push origin main && unstashIfNeeded $app $stashed && return 0
 }
 
 cd $projPath
