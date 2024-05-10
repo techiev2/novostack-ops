@@ -1,21 +1,39 @@
 #!/bin/bash
-projPath=$(dirname $0 | xargs realpath | xargs dirname | xargs dirname)
-startService() {
-  [[ ! -d "$projPath/$1" ]] && echo -e "Service path $1 not found" && exit 1
-  cd "$projPath/$1"
-  session="service-$1"
-  if [[ $1 == 'admin' ]]; then
-    port=5173
-  elif [[ $1 == 'dash' ]]; then
-    port=5174
+opsRoot=$(realpath $0 | xargs dirname | xargs dirname)
+appsRoot=$(dirname $opsRoot)
+
+runInNewSession() {
+  svc=$1
+  _command=$2
+  session="session-$svc"
+  if [[ -z $(tmux ls 2>&1 | grep $session) ]]; then
+    tmux new-session -d -s "$session";
+    tmux send "cd $appsRoot/$svc; npm run $_command" ENTER
+  else
+    $opsRoot/scripts/stop $svc
+    tmux kill-session -t "$session"
+    tmux new-session -d -s "$session";
+    tmux send "cd $appsRoot/$svc; npm run $_command" ENTER
   fi
-  svelteCmd="PORT=$port npm run dev"
-  [[ $1 == "admin" ]] || [[ $1 == "dash" ]] && cmd=$svelteCmd || cmd='npm run service:watch' || cmd=''
-  echo "$1 -> $cmd"
-  [[ -z $(tmux ls | grep "$session") ]] && tmux new-session -d -s "$session" "$cmd" && return 0
-  [[ -z $($projPath/ops/scripts/status "$1" | grep "PID:") ]] && tmux kill-session -t "$session" && tmux new-session -d -s "$session" "npm run service:watch" && return 0 || $projPath/ops/scripts/restart $1
-  return 0
 }
-[[ ! -z $1 ]] && startService $1 && exit 0 || for app in $(ls $projPath); do
-  [[ -f "${projPath}/${app}/package.json" ]] && [[ $app != "utils" ]] && startService $app
-done
+
+startContainerFor() {
+  svc=$1
+  [[ ! -d "$appsRoot/$svc" ]] && echo -e "Service $svc not found in apps root." && return 1
+  [[ ! -f "$appsRoot/$svc/package.json" ]] && echo -e "No package json found for $svc." && return 1
+  pkgJSON=$(cat "$appsRoot/$svc/package.json")
+  runner=""
+  [[ $(echo $pkgJSON | jq '.scripts."service:watch"') != "null" ]] && runner="service:watch"
+  [[ $(echo $pkgJSON | jq '.scripts.dev') != "null" ]] && runner="dev"
+  [[ -z $runner ]] && echo -e "No valid runner script registered in ${svc}" && return 1
+  runInNewSession $svc $runner
+}
+
+main() {
+  [[ ! -z $1 ]] && startContainerFor $1 && exit 0
+  for svc in $(ls $appsRoot); do
+    [[ -d $svc ]] && [[ -s $appsRoot/$svc/package.json ]] && [[ $svc != 'utils' ]] && startContainerFor $svc
+  done
+}
+
+main $@
