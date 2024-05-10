@@ -29,11 +29,14 @@ startContainerFor() {
   runInNewSession $svc $runner
 }
 
-main() {
-  [[ ! -z $1 ]] && startContainerFor $1 && exit 0
+startAllContainers() {
   for svc in $(ls $appsRoot); do
-    [[ -d $svc ]] && [[ -s $appsRoot/$svc/package.json ]] && [[ $svc != 'utils' ]] && startContainerFor $svc
+    [[ -d $appsRoot/$svc ]] && [[ -s $appsRoot/$svc/package.json ]] && [[ $svc != 'utils' ]] && startContainerFor $svc
   done
 }
 
-main $@
+main() {
+  [[ ! -z $1 ]] && startContainerFor $1 && exit 0 || startAllContainers && exit 0
+}
+
+main "$@"
