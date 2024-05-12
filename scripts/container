@@ -5,7 +5,7 @@ appsRoot=$(dirname $opsRoot)
 runInNewSession() {
   svc=$1
   _command=$2
-  session="session-$svc"
+  session="service-$svc"
   if [[ -z $(tmux ls 2>&1 | grep $session) ]]; then
     tmux new-session -d -s "$session";
     tmux send "cd $appsRoot/$svc; npm run $_command" ENTER
