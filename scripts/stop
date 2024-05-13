@@ -3,11 +3,11 @@ projPath=$(dirname $0 | xargs realpath | xargs dirname | xargs dirname)
 stopService() {
   for svc in $@; do
     [[ ! -d "$projPath/$svc" ]] && echo -e "Service path $svc not found" && return 1
-    [[ $svc != "admin" ]] && [[ $svc != 'dash' ]] && [[ ! -f "${projPath}/$svc/configs.json" ]] && echo -e "No configs found for $svc" && return 1
+    [[ $svc != "admin" ]] && [[ $svc != 'dash' ]] && [[ ! -f "${projPath}/$svc/configs.json" ]] && echo -e "No configs found for $svc. Skipping." && return 1
     port=''
     [[ $svc == "admin" ]] && port=5173
     [[ $svc == "dash" ]] && port=5174
-    [[ ! -z $port ]] && return 1
+    [[ -z $port ]] && return 1
     [[ -z $port ]] && [[ $svc != 'admin' ]] && [[ $svc != 'dash' ]] && port=$(cat "${projPath}/$svc/configs.json" | jq '.app.port')
     [[ -z $port ]] && echo -e "Skipping $svc" && return 1
     _pid=$(lsof -i ":${port}" | grep -v "PID" | awk '{print $2}' | tr '\n' ' ' | sed 's/ $//g')
@@ -16,7 +16,7 @@ stopService() {
   done
 }
 
-[[ ! -z $1 ]] && stopService "$@" ||
-for app in $(ls $projPath); do
+[[ ! -z $1 ]] && stopService $1
+[[ -z $1 ]] && for app in $(ls $projPath); do
   [[ -f "${projPath}/${app}/package.json" ]] && [[ $app != "utils" ]] && stopService $app
 done
