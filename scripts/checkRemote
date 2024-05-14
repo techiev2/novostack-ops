@@ -8,6 +8,7 @@ syncToRemote() {
   [[ $count -eq 1 ]] && suffix='' || suffix='s'
   [[ -z $res ]] && echo -e "$1 - \xE2\x9C\x94" && return 0
   echo -e "$1 - ${count} unpushed commit${suffix}\n  >> $res"
+  git push origin main
 }
 for app in $(ls $projPath); do
   [[ -d "${projPath}/${app}/.git" ]] && syncToRemote $app
