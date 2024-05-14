@@ -10,6 +10,7 @@ stopService() {
     [[ -z $port ]] && [[ $svc != 'admin' ]] && [[ $svc != 'dash' ]] && port=$(cat "${projPath}/$svc/configs.json" | jq '.app.port')
     [[ -z $port ]] && echo -e "Skipping $svc" && return 1
     _pid=$(lsof -i ":${port}" | grep -v "PID" | awk '{print $2}' | tr '\n' ' ' | sed 's/ $//g')
+    [[ ! -z $(tmux ls | grep "service-$svc") ]] && tmux kill-session -t "service-$svc"
     [[ -z $_pid ]] && return 0
     kill -9 $_pid
   done
