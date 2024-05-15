@@ -19,7 +19,7 @@ serviceStatus() {
   [[ -z $_pid ]] && echo -e "$1 [✗ | Port: $port]" && failures="$failures $app " && return 0 || echo -e "$1 [\xE2\x9C\x94 | Port: $port | PID: $_pid]" && aliveCount=$(($aliveCount+1))
 }
 bringServicesUp() {
-  $scriptsPath/container $failures
+  $scriptsPath/container "$failures"
   return 0
 }
 
@@ -31,8 +31,8 @@ checkAllServices() {
   for app in $(ls $projPath); do
     [[ -f "${projPath}/${app}/package.json" ]] && [[ $app != 'utils' ]] && serviceStatus $app
   done
-  # echo -e "\n\n"
-  [[ $aliveCount -eq 0 ]] && echo -e "✗ All failed." && bringServicesUp && exit 1 || [[ $serviceCount -gt $aliveCount ]] && echo -e "✗ Partially degraded [$aliveCount/$serviceCount]" && bringServicesUp && exit 1 || echo -e "\xE2\x9C\x94 All services up." && exit 0
+  echo -e "\n\n"
+  [[ $aliveCount -eq 0 ]] && echo -e "✗ All failed." && exit 1 || [[ $serviceCount -gt $aliveCount ]] && echo -e "✗ Partially degraded [$aliveCount/$serviceCount]" && exit 1 || echo -e "\xE2\x9C\x94 All services up." && exit 0
 }
 
 [[ ! -z $1 ]] && serviceStatus $1 && exit 0 || checkAllServices
