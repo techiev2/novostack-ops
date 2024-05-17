@@ -12,16 +12,17 @@ runContainer() {
   session="service-$1"
   [[ ! -z $(tmux ls | grep "service-$1") ]] && killExistingContainer "$session"
   tmux new-session -d -s "$session";
-  tmux send "cd $appsRoot/$svc; npm run $cmd" ENTER
+  tmux send "cd $appsRoot/$svc; $cmd" ENTER
 }
 
 startServiceInContainer() {
   [[ -z $1 ]] && echo -e "No service name provided" && return 1
   echo -e "Starting $1 in container"
   runner=""
-  pkgJSON=$(cat "$appsRoot/$1/package.json")
-  [[ $(echo $pkgJSON | jq '.scripts."service:watch"') != "null" ]] && runner="service:watch"
-  [[ $(echo $pkgJSON | jq '.scripts.dev') != "null" ]] && runner="dev"
+  [[ -f "$appsRoot/$1/package.json" ]] && pkgJSON=$(cat "$appsRoot/$1/package.json") || pkgJSON=""
+  [[ $(echo $pkgJSON | jq '.scripts."service:watch"') != "null" ]] && runner="npm run service:watch"
+  [[ $(echo $pkgJSON | jq '.scripts.dev') != "null" ]] && runner="npm run dev"
+  [[ ! -f "$appsRoot/$1/package.json" ]] && [[ -f "$appsRoot/$1/main.go" ]] && runner="go run main.go"
   [[ -z $runner ]] && echo -e "No valid runner script registered in ${svc}" && return 1
   runContainer "$1" "$runner"
   return 0
@@ -29,7 +30,7 @@ startServiceInContainer() {
 startAllServicesInContainer() {
   echo -e "Starting all services"
   for svc in $(ls $appsRoot); do
-    [[ -d "$appsRoot/$svc" ]] && [[ -f "$appsRoot/$svc/configs.json" ]] && startServiceInContainer "$svc"
+    [[ -d "$appsRoot/$svc" ]] && [[ -f "$appsRoot/$svc/configs.json" ]] || [[ -f "$appsRoot/$svc/main.go" ]] && startServiceInContainer "$svc"
   done
 }
 
