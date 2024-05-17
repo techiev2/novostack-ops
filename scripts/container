@@ -2,41 +2,36 @@
 opsRoot=$(realpath $0 | xargs dirname | xargs dirname)
 appsRoot=$(dirname $opsRoot)
 
-runInNewSession() {
-  svc=$1
-  _command=$2
-  session="service-$svc"
-  if [[ -z $(tmux ls 2>&1 | grep $session) ]]; then
-    tmux new-session -d -s "$session";
-    tmux send "cd $appsRoot/$svc; npm run $_command" ENTER
-  else
-    $opsRoot/scripts/stop $svc
-    tmux kill-session -t "$session"
-    tmux new-session -d -s "$session";
-    tmux send "cd $appsRoot/$svc; npm run $_command" ENTER
-  fi
+killExistingContainer() {
+  tmux kill-session -t "$1"
 }
 
-startContainerFor() {
-  svc=$1
-  [[ ! -d "$appsRoot/$svc" ]] && echo -e "Service $svc not found in apps root." && return 1
-  [[ ! -f "$appsRoot/$svc/package.json" ]] && echo -e "No package json found for $svc." && return 1
-  pkgJSON=$(cat "$appsRoot/$svc/package.json")
+runContainer() {
+  svc="$1"
+  cmd="$2"
+  session="service-$1"
+  [[ ! -z $(tmux ls | grep "service-$1") ]] && killExistingContainer "$session"
+  tmux new-session -d -s "$session";
+  tmux send "cd $appsRoot/$svc; npm run $cmd" ENTER
+}
+
+startServiceInContainer() {
+  [[ -z $1 ]] && echo -e "No service name provided" && return 1
+  echo -e "Starting $1 in container"
   runner=""
+  pkgJSON=$(cat "$appsRoot/$1/package.json")
   [[ $(echo $pkgJSON | jq '.scripts."service:watch"') != "null" ]] && runner="service:watch"
   [[ $(echo $pkgJSON | jq '.scripts.dev') != "null" ]] && runner="dev"
   [[ -z $runner ]] && echo -e "No valid runner script registered in ${svc}" && return 1
-  runInNewSession $svc $runner
+  runContainer "$1" "$runner"
+  return 0
 }
-
-startAllContainers() {
+startAllServicesInContainer() {
+  echo -e "Starting all services"
   for svc in $(ls $appsRoot); do
-    [[ -d $appsRoot/$svc ]] && [[ -s $appsRoot/$svc/package.json ]] && [[ $svc != 'utils' ]] && startContainerFor $svc
+    [[ -d "$appsRoot/$svc" ]] && [[ -f "$appsRoot/$svc/configs.json" ]] && startServiceInContainer "$svc"
   done
 }
 
-main() {
-  [[ ! -z $1 ]] && startContainerFor $1 && exit 0 || startAllContainers && exit 0
-}
-
-main "$@"
+[[ ! -z $1 ]] && startServiceInContainer $1 && exit $?
+startAllServicesInContainer
