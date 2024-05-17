@@ -29,7 +29,7 @@ checkAllServices() {
   done
   echo -e "[$(date '+%Y-%m-%dT%T')] Service [Status | Port | PID]" &&
   for app in $(ls $projPath); do
-    [[ -f "${projPath}/${app}/package.json" ]] && [[ $app != 'utils' ]] && serviceStatus $app
+    [[ $app != 'utils' ]] && [[ -f "${projPath}/${app}/package.json" ]] || [[ -f "${projPath}/${app}/main.go" ]] && serviceStatus $app
   done
   echo -e "\n\n"
   [[ $aliveCount -eq 0 ]] && echo -e "✗ All failed." && exit 1 || [[ $serviceCount -gt $aliveCount ]] && echo -e "✗ Partially degraded [$aliveCount/$serviceCount]" && exit 1 || echo -e "\xE2\x9C\x94 All services up." && exit 0
