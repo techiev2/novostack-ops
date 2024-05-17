@@ -17,7 +17,7 @@ runContainer() {
 
 startServiceInContainer() {
   [[ -z $1 ]] && echo -e "No service name provided" && return 1
-  echo -e "Starting $1 in container"
+  echo -e "Attempting to start $1 in container"
   runner=""
   [[ -f "$appsRoot/$1/package.json" ]] && pkgJSON=$(cat "$appsRoot/$1/package.json") || pkgJSON=""
   [[ $(echo $pkgJSON | jq '.scripts."service:watch"') != "null" ]] && runner="npm run service:watch"
