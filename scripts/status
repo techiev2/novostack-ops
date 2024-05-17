@@ -7,13 +7,7 @@ failures=""
 
 serviceStatus() {
   [[ ! -d "$projPath/$1" ]] && echo -e "Service path $1 not found" && exit 1
-  if [[ $1 == 'admin' ]]; then
-    port=5173
-  elif [[ $1 == 'dash' ]]; then
-    port=5174
-  else
-    [[ -f "${projPath}/$1/configs.json" ]] && port=$(cat "${projPath}/$1/configs.json" | jq '.app.port') || port=''
-  fi
+  [[ -f "${projPath}/$1/configs.json" ]] && port=$(cat "${projPath}/$1/configs.json" | jq '.app.port') || port=''
   [[ -z $port ]] && return 1
   _pid=$(lsof -i ":${port}" | grep -v "PID" | awk '{print $2}' | uniq | tr '\n' ' ' | sed 's/ $//g')
   [[ -z $_pid ]] && echo -e "$1 [✗ | Port: $port]" && failures="$failures $app " && return 0 || echo -e "$1 [\xE2\x9C\x94 | Port: $port | PID: $_pid]" && aliveCount=$(($aliveCount+1))
